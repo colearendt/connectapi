@@ -18,15 +18,21 @@ yaml_template <- function(file = NULL){
   }
 }
 
-yaml_content <- function(connect, filename = ".connect.yml") {
+yaml_content <- function(connect, filename = ".connect.yml", .callback = NULL) {
   cfg <- config::get(value = "content", file = filename)
   
   res <- lapply(
     cfg,
-    function(x, connect) {
-      rlang::exec(yaml_content_deploy, connect = connect, !!!x)
+    function(x, connect, callback) {
+      rlang::exec(
+        yaml_content_deploy, 
+        connect = connect,
+        .callback = callback, 
+        !!!x
+        )
     },
-    connect = connect
+    connect = connect,
+    callback = .callback
   )
   
   return(res)
@@ -41,7 +47,8 @@ yaml_content_deploy <- function(
   url = NULL,
   image = NULL,
   wait = TRUE,
-  ...
+  ...,
+  .callback = NULL
 ) {
   #orig_connect <- connect
   #connect <- connect_input(connect)
@@ -54,6 +61,9 @@ yaml_content_deploy <- function(
     description = description,
     ...
   )
+  
+  if (!is.null(.callback) && is.function(.callback))
+    .callback(c_obj)
   
   c_guid <- c_obj[["guid"]]
   
