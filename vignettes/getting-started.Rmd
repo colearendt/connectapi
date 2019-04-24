@@ -110,3 +110,37 @@ existing content (if you want to examine or change settings)
 content_3 <- con %>%
   content_item(guid = "96532fbc-725e-441b-9cc6-a5622535241b")
 ```
+
+## Data Pools
+
+```r
+add_data_pool(myobject, serializer = write_feather, filename = default name of object)
+
+remove_**?
+
+add_data_pool(mycon, "SELECT * from blah")
+
+publish_data_pools()
+
+add_output_file("myobject.csv")
+
+build_json_metadata("connectapi_data_pool.json")
+timestamp of render
+fs::file_info()
+
+tag_data_pool
+```
+
+
+```r
+# listing rmarkdown reports
+# checking which rmarkdown reports have .json
+# grab by a tag...
+# based on performance
+list_data_pools()
+
+mydata <- data_pool(GUID, key)
+mydata <- data_pool_reactive(GUID, key)
+
+refresh_data()
+```
