@@ -8,10 +8,8 @@ add_data_pool <- function(.data, name = NULL, filename = NULL) {
   
   feather::write_feather(.data, path = filename)
   
-  curr_metadata <- rmarkdown::output_metadata$get("rsc_output_files")
-  if (!filename %in% curr_metadata) {
-    rmarkdown::output_metadata$set(rsc_output_files = c(curr_metadata, filename))
-  }
+  # sanity check the filename
+  stopifnot(!filename %in% c("connectapi_data_pool.json"))
   
   finfo <- as.list(fs::file_info(filename))
   output_finfo <- list(
@@ -37,6 +35,14 @@ add_data_pool <- function(.data, name = NULL, filename = NULL) {
   final_data_pool <- purrr::update_list(existing_data_pool, !!!new_data_pool)
   
   jsonlite::write_json(final_data_pool, output_json_path, auto_unbox = TRUE)
+  
+  curr_metadata <- rmarkdown::output_metadata$get("rsc_output_files")
+  if (!filename %in% curr_metadata) {
+    rmarkdown::output_metadata$set(rsc_output_files = c(curr_metadata, filename))
+  }
+  if (! output_json_path %in% curr_metadata) {
+    rmarkdown::output_metadata$set(rsc_output_files = c(curr_metadata, filename, output_json_path))
+  }
   
   invisible(jsonlite::fromJSON(output_json_path))
 }
