@@ -47,7 +47,7 @@ add_data_pool <- function(.data, name = NULL, filename = NULL) {
   invisible(jsonlite::fromJSON(output_json_path))
 }
 
-data_pool <- function(connect, ...) {
+list_data_pools <- function(connect, ...) {
   # ?search=pool&filter=content_type:document
   # ?search=pool&filter=content_type:document&filter=tag:121
   # take upwards of 6 seconds if we do not go by tag / search
@@ -62,6 +62,7 @@ data_pool <- function(connect, ...) {
   )
   
   # uniqueness could become a problem here
+  # e.g. same app returns twice
   pool_tags_all <- unlist(pool_tags, recursive = FALSE)
   
   # uniqueness problems again
