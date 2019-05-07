@@ -46,3 +46,29 @@ add_data_pool <- function(.data, name = NULL, filename = NULL) {
   
   invisible(jsonlite::fromJSON(output_json_path))
 }
+
+data_pool <- function(connect, ...) {
+  # ?search=pool&filter=content_type:document
+  # ?search=pool&filter=content_type:document&filter=tag:121
+  # take upwards of 6 seconds if we do not go by tag / search
+  dp_tags <- get_data_pool_tag(connect = connect)
+  
+  pool_name <- connect$get_apps(filter = list(content_type = "document"), search = "pool")
+  pool_tags <- lapply(
+    as.list(dp_tags),
+    function(x){
+      connect$get_apps(filter = list(content_type = "document", tag = x))
+    }
+  )
+  
+  # uniqueness could become a problem here
+  pool_tags_all <- unlist(pool_tags, recursive = FALSE)
+  
+  # uniqueness problems again
+  pool_all <- c(pool_name, pool_tags_all)
+}
+
+get_data_pool_tag <- function(connect, tag_name = "data_pool") {
+  tryCatch(connect$get_tag_id(tag_name), error = function(e){return(NULL)})
+}
+
