@@ -67,6 +67,51 @@ list_data_pools <- function(connect, ...) {
   
   # uniqueness problems again
   pool_all <- c(pool_name, pool_tags_all)
+  
+  # pretty output
+  pretty_prep <- purrr::map_df(
+    pool_all, 
+    function(x){
+        new_x <- x[names(x) %in% c("guid", "name", "title", "bundle_id")]
+        new_x$dummy <- TRUE
+        
+        dp_json <- tryCatch({
+          suppressMessages(
+            connect$GET(
+              path = paste0(new_x[["guid"]], "/connectapi_data_pool.json"), 
+              prefix = "content/"
+            )
+          )
+        },
+        error = function(e){list()}
+        )
+        
+        # parse the data_pools
+        dp_prep <- purrr::map_df(
+          dp_json,
+          function(x){
+            tibble::as_tibble(clean_up_ragged_character(x))
+          }
+        )
+        if (ncol(dp_prep) == 0) {
+          dp_prep <- tibble::tibble(dummy = TRUE)[0,]
+        } else {
+          dp_prep$dummy <- TRUE
+        }
+        
+        # join them
+        final <- merge(tibble::as_tibble(new_x), dp_prep, by = "dummy")
+        final$dummy <- NULL
+        
+        tibble::as_tibble(final)
+      }
+    )
+  
+  pretty_prep
+}
+
+clean_up_ragged_character <- function(x){
+  purrr::map_if(x, function(x){length(x) > 1}, function(y){list(as.character(y))})
 }
 
 get_data_pool_tag <- function(connect, tag_name = "data_pool") {
