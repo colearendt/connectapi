@@ -110,6 +110,13 @@ list_data_pools <- function(connect, ...) {
   pretty_prep
 }
 
+data_pool <- function(connect, guid, filename) {
+  # some way to use vanity paths...?
+  download_loc <- fs::file_temp(filename)
+  connect$GET(paste0(guid, "/", filename), httr::write_disk(download_loc), "raw", prefix = "content/")
+  feather::read_feather(download_loc)
+}
+
 clean_up_ragged_character <- function(x){
   purrr::map_if(x, function(x){length(x) > 1}, function(y){list(as.character(y))})
 }
