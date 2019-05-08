@@ -14,7 +14,7 @@ add_data_pool <- function(.data, name = NULL, filename = NULL) {
   finfo <- as.list(fs::file_info(filename))
   output_finfo <- list(
     filename = filename,
-    size = finfo$size,
+    size = finfo[["size"]],
     format = "feather",
     nrow = nrow(.data),
     ncol = ncol(.data),
@@ -73,7 +73,7 @@ list_data_pools <- function(connect, ...) {
     pool_all, 
     function(x){
         new_x <- x[names(x) %in% c("guid", "name", "title", "bundle_id")]
-        new_x$dummy <- TRUE
+        new_x[["dummy"]] <- TRUE
         
         dp_json <- get_data_pool_json(connect = connect, guid = new_x[["guid"]])
         
@@ -82,12 +82,12 @@ list_data_pools <- function(connect, ...) {
         if (ncol(dp_prep) == 0) {
           dp_prep <- tibble::tibble(dummy = TRUE)[0,]
         } else {
-          dp_prep$dummy <- TRUE
+          dp_prep[["dummy"]] <- TRUE
         }
         
         # join them
         final <- merge(tibble::as_tibble(new_x), dp_prep, by = "dummy")
-        final$dummy <- NULL
+        final[["dummy"]] <- NULL
         
         tibble::as_tibble(final)
       }
