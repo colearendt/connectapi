@@ -75,24 +75,10 @@ list_data_pools <- function(connect, ...) {
         new_x <- x[names(x) %in% c("guid", "name", "title", "bundle_id")]
         new_x$dummy <- TRUE
         
-        dp_json <- tryCatch({
-          suppressMessages(
-            connect$GET(
-              path = paste0(new_x[["guid"]], "/connectapi_data_pool.json"), 
-              prefix = "content/"
-            )
-          )
-        },
-        error = function(e){list()}
-        )
+        dp_json <- get_data_pool_json(connect = connect, guid = new_x[["guid"]])
         
         # parse the data_pools
-        dp_prep <- purrr::map_df(
-          dp_json,
-          function(x){
-            tibble::as_tibble(clean_up_ragged_character(x))
-          }
-        )
+        dp_prep <- parse_data_pool_json(dp_json)
         if (ncol(dp_prep) == 0) {
           dp_prep <- tibble::tibble(dummy = TRUE)[0,]
         } else {
@@ -108,6 +94,28 @@ list_data_pools <- function(connect, ...) {
     )
   
   pretty_prep
+}
+
+parse_data_pool_json <- function(json) {
+  purrr::map_df(
+          json,
+          function(x){
+            tibble::as_tibble(clean_up_ragged_character(x))
+          }
+        )
+}
+
+get_data_pool_json <- function(connect, guid) {
+  tryCatch({
+    suppressMessages(
+      connect$GET(
+        path = paste0(guid, "/connectapi_data_pool.json"), 
+        prefix = "content/"
+      )
+    )
+  },
+  error = function(e){list()}
+  )
 }
 
 data_pool <- function(connect, guid, filename) {
