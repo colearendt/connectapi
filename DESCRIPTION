@@ -19,7 +19,9 @@ Imports:
     config,
     yaml,
     magrittr,
-    feather
+    feather,
+    purrr,
+    tibble
 RoxygenNote: 6.1.1
 Suggests: 
     rmarkdown,
