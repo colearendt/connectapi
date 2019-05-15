@@ -32,6 +32,7 @@ Suggests:
     ggplot2,
     gridExtra,
     testthat,
-    knitr
+    knitr,
+    shiny
 Remotes: slopp/webshot
 VignetteBuilder: knitr
