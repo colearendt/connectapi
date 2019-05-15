@@ -113,7 +113,7 @@ data_pool <- function(connect, guid, filename) {
 #' @export
 reactive_data_pool <- function(connect, guid, filename, interval_millis = 1000, session = shiny::getDefaultReactiveDomain()) {
   if (!requireNamespace("shiny", quietly = TRUE)) {
-    stop("Please install the shiny package to make use of connectapi::reactive_data_pool()")
+    stop("Please install the shiny package to use the connectapi::reactive_data_pool() function")
   }
   shiny::reactivePoll(
     intervalMillis = interval_millis,
