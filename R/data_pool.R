@@ -47,6 +47,7 @@ add_data_pool <- function(.data, name = NULL, filename = NULL) {
   invisible(jsonlite::fromJSON(output_json_path))
 }
 
+#' @export
 list_data_pools <- function(connect, ...) {
   # ?search=pool&filter=content_type:document
   # ?search=pool&filter=content_type:document&filter=tag:121
@@ -96,6 +97,33 @@ list_data_pools <- function(connect, ...) {
   pretty_prep
 }
 
+#' @export
+data_pool <- function(connect, guid, filename) {
+  # some way to use vanity paths...?
+  # validate that this data_pool exists before firing!
+  download_loc <- fs::file_temp(filename)
+  connect$GET(paste0(guid, "/", filename), httr::write_disk(download_loc), "raw", prefix = "content/")
+  feather::read_feather(download_loc)
+}
+
+# can list_data_pools return a list of S6 objects...?
+# is it possible for the print method to look like a tbl?
+# then I can just grab which one I want...
+
+#' @export
+reactive_data_pool <- function(connect, guid, filename, intervalMillis = 1000, session = shiny::getDefaultReactiveDomain()) {
+  shiny::reactivePoll(
+    intervalMillis = intervalMillis,
+    session = session,
+    checkFunc = function() {
+      # poll the LastModified header
+    },
+    valueFunc = function() {
+      data_pool(connect = connect, guid = guid, filename = filename)
+    }
+  )
+}
+
 parse_data_pool_json <- function(json) {
   purrr::map_df(
           json,
@@ -116,13 +144,6 @@ get_data_pool_json <- function(connect, guid) {
   },
   error = function(e){list()}
   )
-}
-
-data_pool <- function(connect, guid, filename) {
-  # some way to use vanity paths...?
-  download_loc <- fs::file_temp(filename)
-  connect$GET(paste0(guid, "/", filename), httr::write_disk(download_loc), "raw", prefix = "content/")
-  feather::read_feather(download_loc)
 }
 
 clean_up_ragged_character <- function(x){
