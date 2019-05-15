@@ -111,9 +111,9 @@ data_pool <- function(connect, guid, filename) {
 # then I can just grab which one I want...
 
 #' @export
-reactive_data_pool <- function(connect, guid, filename, intervalMillis = 1000, session = shiny::getDefaultReactiveDomain()) {
+reactive_data_pool <- function(connect, guid, filename, interval_millis = 1000, session = shiny::getDefaultReactiveDomain()) {
   shiny::reactivePoll(
-    intervalMillis = intervalMillis,
+    intervalMillis = interval_millis,
     session = session,
     checkFunc = function() {
       headers <- connect$HEAD(paste0(guid, "/", filename), prefix = "content/")
