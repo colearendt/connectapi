@@ -116,7 +116,8 @@ reactive_data_pool <- function(connect, guid, filename, intervalMillis = 1000, s
     intervalMillis = intervalMillis,
     session = session,
     checkFunc = function() {
-      # poll the LastModified header
+      headers <- connect$HEAD(paste0(guid, "/", filename), prefix = "content/")
+      headers[["last-modified"]]
     },
     valueFunc = function() {
       data_pool(connect = connect, guid = guid, filename = filename)
