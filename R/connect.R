@@ -43,6 +43,18 @@ Connect <- R6::R6Class(
         stop(err)
       }
     },
+    
+    HEAD = function(path, writer = httr::write_memory(), prefix = "__api__/") {
+      req <- paste0(self$host, "/", prefix, path)
+      res <- httr::HEAD(
+        req,
+        httr::add_headers(Authorization = paste0('Key ', self$api_key)),
+        writer
+      )
+      self$raise_error(res)
+      check_debug(req, res)
+      httr::headers(res)
+    },
 
     GET = function(path, writer = httr::write_memory(), parser = 'parsed', prefix = "__api__/") {
       req <- paste0(self$host, '/', prefix, path)
