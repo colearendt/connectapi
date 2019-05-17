@@ -65,12 +65,11 @@ list_data_pools <- function(connect, ...) {
     }
   )
   
-  # uniqueness could become a problem here
-  # e.g. same app returns twice
-  pool_tags_all <- unlist(pool_tags, recursive = FALSE)
-  
-  # uniqueness problems again
+  pool_tags_all <- purrr::flatten(pool_tags)
   pool_all <- c(pool_name, pool_tags_all)
+  
+  # ensure uniqueness (by guid)
+  pool_all <- collapse_by_id(pool_all, function(x){x[["guid"]]})
   
   # pretty output
   pretty_prep <- purrr::map_df(
