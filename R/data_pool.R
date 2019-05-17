@@ -100,6 +100,16 @@ list_data_pools <- function(connect, ...) {
   pretty_prep
 }
 
+search_data_pools <- function(.data, name) {
+  
+}
+
+collapse_by_id <- function(.list, .keyf) {
+  list_names <- purrr::map_chr(.list, .keyf)
+  prep <- purrr::reduce2(.list, as.list(list_names), function(x,y,z) purrr::list_modify(x, purrr::set_names(list(y), z)), .init = list())
+  purrr::set_names(prep[[1]], NULL)
+}
+
 #' @export
 data_pool <- function(connect, guid, filename) {
   # some way to use vanity paths...?
