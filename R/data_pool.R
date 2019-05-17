@@ -3,7 +3,7 @@ add_data_pool <- function(.data, name = NULL, filename = NULL) {
   qdata <- rlang::enquo(.data)
   
   if (is.null(name)) name <- rlang::quo_text(qdata)
-  name <- gsub("[^A-Za-z0-9\\_\\-]", "", name)
+  name <- gsub("[^A-Za-z0-9\\_\\.\\-]", "", name) # TODO: add testing for -... it is weird
   if (is.null(filename)) filename <- paste0(name, ".feather")
   
   stopifnot(is.data.frame(.data))
