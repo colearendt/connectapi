@@ -2,10 +2,13 @@
 add_data_pool <- function(.data, name = NULL, filename = NULL) {
   qdata <- rlang::enquo(.data)
   
-  # TODO: limit the characters allowed in these names [A-Za-z\_\-]
   if (is.null(name)) name <- rlang::quo_text(qdata)
+  name <- gsub("[^A-Za-z0-9\\_\\-]", "", name)
   if (is.null(filename)) filename <- paste0(name, ".feather")
   
+  stopifnot(is.data.frame(.data))
+  
+  message(glue::glue("Writing data_pool: {filename}"))
   feather::write_feather(.data, path = filename)
   
   # sanity check the filename
