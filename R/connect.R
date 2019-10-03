@@ -1,7 +1,6 @@
-#'
 #' Class representing a Connect API client
 #'
-#' @name Connect
+#' @name RStudioConnect
 #'
 #' @section Usage:
 #' \preformatted{
@@ -16,10 +15,8 @@
 #' This class allows a user to interact with a Connect server via the Connect
 #' API. Authentication is done by providing an API key.
 #'
-NULL
-
+#' @importFrom utils capture.output
 #' @export
-
 Connect <- R6::R6Class(
   'Connect',
 
@@ -29,10 +26,22 @@ Connect <- R6::R6Class(
     tags = NULL,
     tag_map = NULL,
 
-    initialize = function(host = Sys.getenv("RSTUDIO_CONNECT_SERVER", NA), api_key = Sys.getenv("RSTUDIO_CONNECT_API_KEY", NA)) {
+    get_connect = function() {self},
+    
+    initialize = function(host, api_key) {
       message(glue::glue("Defining Connect with host: {host}"))
-      self$host = host
+      self$host = base::sub("^(.*)/$", "\\1", host)
       self$api_key = api_key
+    },
+    
+    print = function(...) {
+      cat("RStudio Connect API Client: \n")
+      cat("  RStudio Connect Server: ", self$host, "\n", sep = "")
+      cat("  RStudio Connect API Key: ", paste0(strrep("*",11), substr(self$api_key, nchar(self$api_key)-3, nchar(self$api_key))), "\n", sep = "")
+      # TODO: something about API key... role... ?
+      # TODO: point to docs on methods... how to see methods?
+      cat("\n")
+      invisible(self)
     },
 
     raise_error = function(res) {
@@ -40,6 +49,7 @@ Connect <- R6::R6Class(
         err <- sprintf('%s request failed with %s',
                        res$request$url,
                        httr::http_status(res)$message)
+        message(capture.output(str(httr::content(res))))
         stop(err)
       }
     },
@@ -78,8 +88,8 @@ Connect <- R6::R6Class(
       httr::content(res, as = 'parsed')
     },
 
-    get_tags = function() {
-      if (is.null(self$tags)) {
+    get_tags = function(use_cache = FALSE) {
+      if (is.null(self$tags) || !use_cache) {
           self$tags <- self$GET('/tags')
       }
       self$tag_map <- data.frame(
@@ -96,6 +106,28 @@ Connect <- R6::R6Class(
         stop(sprintf('Tag %s not found on server %s', tagname, self$host))
       self$tag_map[which(self$tag_map$name == tagname), 'id']
     },
+    
+    get_tag_tree = function() {
+      warn_experimental("get_tag_tree")
+      self$GET("tag-tree")
+    },
+    
+    create_tag = function(name, parent_id = NULL) {
+      warn_experimental("create_tag")
+      dat <- list(
+        name = name
+      )
+      if (!is.null(parent_id)) {
+        dat <- c(
+          dat,
+          parent_id = parent_id
+        )
+      }
+      self$POST(
+        "tags",
+        body = dat
+        )
+    },
 
     get_n_apps = function() {
       path <- 'applications'
@@ -105,9 +137,9 @@ Connect <- R6::R6Class(
 
     # filter is a named list, e.g. list(name = 'appname')
     # this function supports pages
-    get_apps = function(filter = NULL) {
+    get_apps = function(filter = NULL, .collapse = "&") {
       if (!is.null(filter)) {
-        query <- paste(sapply(1:length(filter), function(i){sprintf('%s:%s',names(filter)[i],filter[[i]])}), collapse = '&')
+        query <- paste(sapply(1:length(filter), function(i){sprintf('%s:%s',names(filter)[i],filter[[i]])}), collapse = .collapse)
         path <- paste0('applications?filter=',query)
         sep <- '&'
       } else {
@@ -150,7 +182,7 @@ Connect <- R6::R6Class(
     },
 
     download_bundle = function(bundle_id, to_path = tempfile()) {
-      path <- glue::glue('bundles/{bundle_id}/download')
+      path <- glue::glue('v1/experimental/bundles/{bundle_id}/download')
       self$GET(path, httr::write_disk(to_path), "raw")
       to_path
     },
@@ -168,33 +200,50 @@ Connect <- R6::R6Class(
       return(res)
     },
     
-    get_content = function(guid) {
+    content = function(guid) {
       path <- sprintf("v1/experimental/content/%s", guid)
       res <- self$GET(path)
       return(res)
     },
 
-    get_task = function(task_id, first = 0, wait = 5) {
+    task = function(task_id, first = 0, wait = 5) {
       path <- sprintf('v1/experimental/tasks/%s?first=%d&wait=%d', task_id, first, wait)
       self$GET(path)
     },
     
+    set_content_tag = function(content_id, tag_id) {
+      warn_experimental("set_content_tag")
+      self$POST(
+        path = glue::glue("applications/{content_id}/tags"),
+        body = list(
+          id = tag_id
+        )
+      )
+    },
+    
     # users -----------------------------------------------
     
-    get_users = function(page_number = 1){
+    users = function(page_number = 1, prefix = NULL){
       path <- sprintf('v1/users?page_number=%d', page_number)
+      if (!is.null(prefix)) {
+        path <- paste0(path, "&prefix=", prefix)
+      }
       self$GET(path)
     },
     
-    get_users_remote = function(prefix) {
+    users_remote = function(prefix) {
       path <- sprintf('v1/users/remote?prefix=%s', prefix)
       self$GET(path)
     },
     
     users_create = function(
-      email, first_name, last_name,
-      password, user_must_set_password, 
-      user_role, username
+      username,
+      email, 
+      first_name = NULL, 
+      last_name = NULL,
+      password = NULL, 
+      user_must_set_password = NULL, 
+      user_role = NULL
       ) {
       path <- sprintf('v1/users')
       self$POST(path = path,
@@ -217,7 +266,7 @@ Connect <- R6::R6Class(
                 )
     },
     
-    user_unlock = function(user_guid) {
+    users_unlock = function(user_guid) {
       path <- sprintf('v1/users/%s/lock', user_guid)
       self$POST(
         path = path,
@@ -257,7 +306,9 @@ Connect <- R6::R6Class(
           "{safe_query(nxt, 'next=')}",
           "{safe_query(asc_order, 'asc_order=')}",
           .sep = "&"
-        )
+        ) %>%
+          gsub("^&+","",.) %>%
+          gsub("&+", "&", .)
       )
       
       self$GET(path)
@@ -286,7 +337,9 @@ Connect <- R6::R6Class(
           "{safe_query(nxt, 'next=')}",
           "{safe_query(asc_order, 'asc_order=')}",
           .sep = "&"
-        )
+        ) %>%
+          gsub("^&+","",.) %>%
+          gsub("&+", "&", .)
       )
       
       self$GET(path)
@@ -294,31 +347,31 @@ Connect <- R6::R6Class(
     
     # misc utilities --------------------------------------------
     
-    get_docs = function(docs = "api") {
+    docs = function(docs = "api") {
       stopifnot(docs %in% c("admin", "user", "api"))
       utils::browseURL(paste0(self$host, '/__docs__/', docs))
     },
     
-    get_audit_logs = function(limit = 20L, previous = NULL, nxt = NULL, asc_order = TRUE) {
+    audit_logs = function(limit = 20L, previous = NULL, nxt = NULL, asc_order = TRUE) {
       path <- glue::glue(
         "v1/audit_logs?limit={limit}",
         "{safe_query(previous, '&previous=')}",
         "{safe_query(nxt, '&next=')}",
-        "&ascOrder={asc_order}"
+        "&ascOrder={tolower(as.character(asc_order))}"
         )
       self$GET(
         path = path
       )
     },
     
-    get_server_settings_r = function() {
+    server_settings_r = function() {
       path <- "v1/server_settings/r"
       self$GET(
         path = path
       )
     },
     
-    get_server_settings = function() {
+    server_settings = function() {
       path <- "server_settings"
       self$GET(
         path = path
@@ -328,6 +381,49 @@ Connect <- R6::R6Class(
     # end --------------------------------------------------------
   )
 )
+
+#' Create a connection to RStudio Connect
+#' 
+#' Creates a connection to RStudio Connect using the hostname and an api key.
+#' Validates the connection and checks that the version of the server is
+#' compatible with the current version of the package.
+#' 
+#' @param host The URL for accessing RStudio Connect. Defaults to environment
+#'   variable RSTUDIO_CONNECT_SERVER
+#' @param api_key The API Key to authenticate to RStudio Connect with. Defaults
+#'   to environment variable RSTUDIO_CONNECT_API_KEY
+#' @return An RStudio Connect R6 object that can be passed along to methods
+#' 
+#' @rdname connect
+#' @export
+connect <- function(
+  host = Sys.getenv("RSTUDIO_CONNECT_SERVER", NA_character_),
+  api_key = Sys.getenv("RSTUDIO_CONNECT_API_KEY", NA_character_)
+) {
+  con <- Connect$new(host = host, api_key = api_key)
+  
+  # check Connect is accessible
+  srv <- tryCatch({
+    con$server_settings()
+  }, 
+  error = function(e){
+    message(
+      glue::glue("Problem talking to RStudio Connect at {host}/__api__/server_settings")
+      )
+    stop(e)
+  })
+
+  # validate version
+  if (is.null(srv$version)) {
+    message("Version information is not exposed by this RStudio Connect instance.")
+  } else if (nchar(srv$version) == 0) {
+    message("Version information is not exposed by this RStudio Connect instance.")
+  } else {
+    check_connect_version(using_version = srv$version)
+  }
+  
+  con
+}
 
 check_debug <- function(req, res) {
   debug <- getOption('connect.debug')
