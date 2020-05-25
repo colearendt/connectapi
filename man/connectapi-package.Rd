@@ -7,15 +7,24 @@
 \title{connectapi: Utilities for Interacting with the RStudio Connect Server
     API}
 \description{
-Helpful R6 class for interacting with the RStudio
-    Connect Server API and some example utility functions.
+\if{html}{\figure{logo.png}{options: align='right' alt='logo' width='120'}}
+
+Provides a helpful R6 class for interacting with the RStudio
+    Connect Server API along with some meaningful utility functions.
+}
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/rstudio/connectapi}
+}
+
 }
 \author{
-\strong{Maintainer}: Sean Lopp \email{sean@rstudio.com}
+\strong{Maintainer}: Cole Arendt \email{cole@rstudio.com}
 
 Authors:
 \itemize{
-  \item Cole Arendt \email{cole@rstudio.com}
+  \item Sean Lopp \email{sean@rstudio.com}
 }
 
 Other contributors:

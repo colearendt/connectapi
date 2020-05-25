@@ -4,3 +4,10 @@
 ^\.github$
 ^renv$
 ^renv\.lock$
+^README\.Rmd$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
+^\.travis\.yml$
+^Makefile$
+^Jenkinsfile$

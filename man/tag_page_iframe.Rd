@@ -4,7 +4,7 @@
 \alias{tag_page_iframe}
 \title{Tag Page iframe}
 \usage{
-tag_page_iframe(connect, tag, metadata = NULL)
+tag_page_iframe(connect, tag, metadata = NULL, quiet = FALSE)
 }
 \arguments{
 \item{connect}{A Connect object}
@@ -12,6 +12,8 @@ tag_page_iframe(connect, tag, metadata = NULL)
 \item{tag}{A tag to search for. NOTE: tag names are not necessarily unique}
 
 \item{metadata}{A metadata object to be used for enriching application data}
+
+\item{quiet}{Whether to suppress rmarkdown logging}
 }
 \description{
 \lifecycle{experimental}
@@ -21,10 +23,10 @@ only load resources when accessed (for performance)
 }
 \details{
 Unfortunately, iframes do not pass cookies as cleanly as I would like... I am having
-trouble even getting this to work in the "same-origin" setup that _should_
+trouble even getting this to work in the "same-origin" setup that \emph{should}
 work (it is failing if the iframe uses a different origin from the parent)
 
-See the examples for how to define a `metadata` object. It should be a list
+See the examples for how to define a \code{metadata} object. It should be a list
 of lists (i.e. a list of objects). Each "object" should have a "guid"
 attribute, which will be used to update the application data.
 }
@@ -33,15 +35,14 @@ app_metadata <- list(
   list(guid = "abcde-abcd-abcd-abcde", content_group = "Group 1"),
   list(guid = "fghij-fghi-fghi-fghij", content_group = "Group 2")
 )
-
 }
 \references{
 \itemize{
-  \item{\url{https://security.stackexchange.com/questions/182518/how-to-confirm-that-an-embedded-iframe-can-read-cookies-from-parent}}
-  \item{\url{https://www.html5rocks.com/en/tutorials/security/sandboxed-iframes/}}
-  \item{\url{https://stackoverflow.com/questions/31184505/sandboxing-iframe-and-allow-same-origin}}
-  \item{\url{https://stackoverflow.com/questions/2117248/setting-cookie-in-iframe-different-domain}}
-  \item{\url{https://stackoverflow.com/questions/13432821/is-it-possible-to-add-request-headers-to-an-iframe-src-request}}
+\item{\url{https://security.stackexchange.com/questions/182518/how-to-confirm-that-an-embedded-iframe-can-read-cookies-from-parent}}
+\item{\url{https://www.html5rocks.com/en/tutorials/security/sandboxed-iframes/}}
+\item{\url{https://stackoverflow.com/questions/31184505/sandboxing-iframe-and-allow-same-origin}}
+\item{\url{https://stackoverflow.com/questions/2117248/setting-cookie-in-iframe-different-domain}}
+\item{\url{https://stackoverflow.com/questions/13432821/is-it-possible-to-add-request-headers-to-an-iframe-src-request}}
 }
 }
 \keyword{internal}

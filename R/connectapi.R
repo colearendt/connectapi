@@ -4,8 +4,9 @@
 
 utils::globalVariables(
   c(
-    "r_version"
+    "r_version",
+    "."
   )
 )
 
-current_connect_version <- "1.7.8-7"
+current_connect_version <- "1.8.2-10"

@@ -1,29 +1,59 @@
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
 <!-- badges: start -->
-[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://www.tidyverse.org/lifecycle/#experimental)
-[![CRAN status](https://www.r-pkg.org/badges/version/connectapi)](https://cran.r-project.org/package=connectapi)
+
+[![Lifecycle:
+maturing](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://www.tidyverse.org/lifecycle/#maturing)
+[![CRAN
+status](https://www.r-pkg.org/badges/version/connectapi)](https://cran.r-project.org/package=connectapi)
+[![Travis build
+status](https://travis-ci.org/rstudio/connectapi.svg?branch=master)](https://travis-ci.org/rstudio/connectapi)
 <!-- badges: end -->
 
-# connectapi - **WIP**
+# connectapi <img src='man/figures/logo.svg' align="right" height="139" />
 
-This package is an **experimental WIP**. The package is designed to provide an R
-client for the RStudio Connect API as well as helpful functions that utilize the
-client. The client is based off a similar client in the `rsconnnect` package,
-but is publicly exported to be easier to use, is extensible via an R6 class, and
-is separated from the `rsconnect` package for easier support and maintenance.
+This package provides an R client for the [RStudio Connect Server
+API](https://docs.rstudio.com/connect/api/) as well as helpful functions
+that utilize the client. The package is based on the `rsconnnect`
+[package](https://rstudio.github.io/rsconnect/), but is publicly
+exported to be easier to use, is extensible via an R6 class, and is
+separated from the `rsconnect` package for easier support and
+maintenance.
+
+## Disclaimer
+
+Because many of these functions are experimental, it is advisable to be
+cautious about (1) upgrading the package, (2) upgrading RStudio Connect
+when you care about the reproducibility of workflows that use
+`connectapi`. As a result, we would advise:
+
+  - managing package versions with
+    [`renv`](https://rstudio.github.io/renv/)
+  - test your dependent content before and after upgrading RStudio
+    Connect
+
+Please pay careful attention to the lifecycle badges of the various
+functions and warnings present when you are using experimental features.
+
+**Also, [please share
+feedback\!\!](https://community.rstudio.com/c/r-admin/rstudio-connect/27)
+We love hearing how the RStudio Connect Server API is helpful and what
+additional endpoints would be useful\!\!**
 
 ## Installation
 
-To get started:
+To install the development version:
 
-```r
-devtools::install_github('rstudio/connectapi')
+``` r
+remotes::install_github('rstudio/connectapi')
 ```
 
 ## Client
 
 To create a client:
 
-```r
+``` r
 library(connectapi)
 client <- connect(
   host = 'https://connect.example.com',
@@ -31,47 +61,86 @@ client <- connect(
 )
 ```
 
-You can also define the following environment variables (in a `.Renviron` file, for instance):
+You can also define the following environment variables (in a
+`.Renviron` file, for instance):
 
-```
-RSTUDIO_CONNECT_SERVER=https://connect.example.com
-RSTUDIO_CONNECT_API_KEY=my-secret-api-key
-```
+    CONNECT_SERVER  = https://connect.example.com
+    CONNECT_API_KEY = my-secret-api-key
 
-These environment variable values will be used automatically if defined in your R session.
+These environment variable values will be used automatically if defined
+in your R session.
 
-```r
+``` r
 library(connectapi)
 client <- connect()
 ```
 
 ## Getting Started
 
-Once a client is defined, you can use it to interact with RStudio Connect. For instance:
+Once a client is defined, you can use it to interact with RStudio
+Connect.
 
-```r
+### Exploring Data
+
+You can use the `get_` methods to retrieve data from the RStudio Connect
+server.
+
+``` r
+library(connectapi)
+client <- connect()
+
+# get data
+users <- get_users(client)
+groups <- get_groups(client)
+usage_shiny <- get_usage_shiny(client)
+usage_static <- get_usage_static(client)
+some_content <- get_content(client)
+
+# get all content
+all_content <- get_content(client, n = Inf)
+```
+
+### Deployment
+
+The `rsconnect` package is usually used for deploying content to
+Connect. However, if you want to use programmatic deployment with the
+RStudio Connect Server API, then these `connectapi` helpers should be
+useful\!
+
+``` r
 library(connectapi)
 client <- connect()
 
 # deploying content
+# NOTE: a `manifest.json` should already exist from `rsconnect::writeManifest()`
+
 bundle <- bundle_dir("./path/to/directory")
-content <- client %>% deploy(bundle, name = "my-app-name") %>% poll_task()
+content <- client %>% 
+  deploy(bundle, name = "my-app-name") %>% 
+  poll_task()
 
 # set an image for content
-content %>% set_image_path("./my/local/image.png")
-content %>% set_image_url("http://url.example.com/image.png")
+
+content %>% 
+  set_image_path("./my/local/image.png")
+
+content %>% 
+  set_image_url("http://url.example.com/image.png")
 
 # set image and a vanity URL
+
 content %>%
   set_image_path("./my/local/image.png") %>%
   set_vanity_url("/my-awesome-app")
   
 # edit another piece of content
+
 client %>%
   content_item("the-content-guid") %>%
   set_vanity_url("/another-awesome-app")
   
 # migrate content to another server
+
 client_prod <- connect(
   host = "prod.example.com",
   api_key = "my-secret-key"
@@ -84,10 +153,14 @@ prod_bnd <- client %>%
 client_prod %>%
   deploy(prod_bnd, title = "Now in Production") %>%
   set_vanity_url("/my-app")
+
+# open a browser to the content item
+client_prod %>% browse_dashboard()
+client_prod %>% browse_solo()
 ```
 
 # Code of Conduct
 
-Please note that the 'connectapi' project is released with a
-[Contributor Code of Conduct](.github/CODE_OF_CONDUCT.md).
-By contributing to this project, you agree to abide by its terms.
+Please note that the `connectapi` project is released with a
+[Contributor Code of Conduct](.github/CODE_OF_CONDUCT.md). By
+contributing to this project, you agree to abide by its terms.
